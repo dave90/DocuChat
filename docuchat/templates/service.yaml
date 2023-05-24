@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.textToVecService.name }}
+spec:
+  type: ClusterIP
+  ports:
+  - port: {{ .Values.textToVecService.port }}
+  selector:
+    app: {{ .Values.textToVecService.name }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.dbVectorService.name }}
+spec:
+  type: ClusterIP
+  ports:
+  - port: {{ .Values.dbVectorService.port }}
+  selector:
+    app: {{ .Values.dbVectorService.name }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.agentService.name }}
+spec:
+  type: ClusterIP
+  ports:
+  - port: {{ .Values.agentService.port }}
+  selector:
+    app: {{ .Values.agentService.name }}

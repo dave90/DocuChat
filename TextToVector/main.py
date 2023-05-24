@@ -9,6 +9,7 @@ import requests
 import os
 
 app = FastAPI()
+app.openapi_version = "3.0.0"
 nltk.download('punkt')
 
 class Text(BaseModel):

@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.textToVecService.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.textToVecService.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.textToVecService.name }}
+    spec:
+      containers:
+      - name: {{ .Values.textToVecService.name }}
+        image: "{{ .Values.textToVecImage.repository }}:{{ .Values.textToVecImage.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.textToVecImage.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.textToVecService.port }}
+        env:
+        - name: DBVECTOR_SERVICE_NAME
+          value: "{{ .Values.dbVectorService.name }}"
+        - name: DBVECTOR_SERVICE_PORT
+          value: "{{ .Values.dbVectorService.port }}"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.dbVectorService.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.dbVectorService.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.dbVectorService.name }}
+    spec:
+      containers:
+      - name: {{ .Values.dbVectorService.name }}
+        image: "{{ .Values.dbVecImage.repository }}:{{ .Values.dbVecImage.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.dbVecImage.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.dbVectorService.port }}
+        env:
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-token 
+              key: token
+        volumeMounts:
+        - name: db-vec-db
+          mountPath: /service/db
+      volumes:
+      - name: db-vec-db
+        persistentVolumeClaim:
+          claimName: {{ .Values.dbVectorService.name }}-pvc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.agentService.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.agentService.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.agentService.name }}
+    spec:
+      containers:
+      - name: {{ .Values.agentService.name }}
+        image: "{{ .Values.agentImage.repository }}:{{ .Values.agentImage.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.dbVecImage.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.agentService.port }}
+        env:
+        - name: DBVECTOR_SERVICE_NAME
+          value: "{{ .Values.dbVectorService.name }}"
+        - name: DBVECTOR_SERVICE_PORT
+          value: "{{ .Values.dbVectorService.port }}"
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-token 
+              key: token

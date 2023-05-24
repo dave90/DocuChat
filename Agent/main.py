@@ -11,7 +11,7 @@ from langchain.prompts import load_prompt
 from langchain.chains import LLMChain
 
 app = FastAPI()
-
+app.openapi_version = "3.0.0"
 
 class QueryText(BaseModel):
     text: str

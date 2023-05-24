@@ -1,1 +1,2 @@
-uvicorn main:app --reload --port 8002
+#!/bin/bash
+uvicorn main:app --host 0.0.0.0 --port 8002 --root-path /agent
