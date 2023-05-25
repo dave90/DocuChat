@@ -30,3 +30,14 @@ spec:
   - port: {{ .Values.agentService.port }}
   selector:
     app: {{ .Values.agentService.name }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.redisService.name }}
+spec:
+  type: ClusterIP
+  ports:
+  - port: {{ .Values.redisService.port }}
+  selector:
+    app: {{ .Values.redisService.name }}

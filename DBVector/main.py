@@ -3,14 +3,49 @@ from fastapi import FastAPI
 from typing import List, Union
 
 from pydantic import BaseModel
-from langchain.vectorstores import Chroma
-from langchain.embeddings.openai import OpenAIEmbeddings
+import openai
+import numpy as np
 
 import os
 
-app = FastAPI()
+import redis
+from redis.commands.search.field import TagField, VectorField
+from redis.commands.search.indexDefinition import IndexDefinition, IndexType
+from redis.commands.search.query import Query
 
-persist_directory = 'db'
+redis_host = os.environ["REDIS_HOST"]
+redis_port = os.environ["REDIS_PORT"]
+
+r = redis.Redis(host=redis_host, port=redis_port)
+INDEX_NAME = "index"                              # Vector Index Name
+DOC_PREFIX = "doc:"                               # RediSearch Key Prefix for the Index
+VECTOR_DIMENSIONS = 1536
+
+def create_index(vector_dimensions: int):
+    try:
+        # check to see if index exists
+        r.ft(INDEX_NAME).info()
+        print("Index already exists!")
+    except:
+        # schema
+        schema = (
+            TagField("tag"),                       # Tag Field Name
+            VectorField("vector",                  # Vector Field Name
+                "FLAT", {                          # Vector Index Type: FLAT or HNSW
+                    "TYPE": "FLOAT32",             # FLOAT32 or FLOAT64
+                    "DIM": vector_dimensions,      # Number of Vector Dimensions
+                    "DISTANCE_METRIC": "COSINE",   # Vector Search Distance Metric
+                }
+            ),
+        )
+
+        # index Definition
+        definition = IndexDefinition(prefix=[DOC_PREFIX], index_type=IndexType.HASH)
+
+        # create Index
+        r.ft(INDEX_NAME).create_index(fields=schema, definition=definition)
+
+app = FastAPI()
 
 
 class TextChunks(BaseModel):
@@ -33,17 +68,56 @@ def store_text(text_request: TextChunks):
     if len(chunks) == 0:
         return "EMPTY CHUNKS"
 
-    embeddings = OpenAIEmbeddings()
-    vectordb = Chroma.from_texts(chunks, embeddings,persist_directory=persist_directory)
-    vectordb.persist()
+    create_index(vector_dimensions=VECTOR_DIMENSIONS)
+
+    #embeddings = OpenAIEmbeddings()
+    #vectordb = Chroma.from_texts(chunks, embeddings,persist_directory=persist_directory)
+    #vectordb.persist()
+
+    response = openai.Embedding.create(input=chunks, engine="text-embedding-ada-002")
+    embeddings = np.array([r["embedding"] for r in response["data"]], dtype=np.float32)
+
+    # Write to Redis
+    pipe = r.pipeline()
+    for i, embedding in enumerate(embeddings):
+        pipe.hset(f"doc:{i}", mapping={
+            "vector": embedding.tobytes(),
+            "content": chunks[i],
+            "tag": "openai"
+        })
+    res = pipe.execute()
+    print(res)
+
+    r.save()
 
     return "OK"
 
 @app.get("/get_text")
 def get_text():
-    embeddings = OpenAIEmbeddings()
-    vectordb = Chroma.from_texts([""], embeddings,persist_directory=persist_directory)
-    result = vectordb.get()
+    #embeddings = OpenAIEmbeddings()
+    #vectordb = Chroma.from_texts([""], embeddings,persist_directory=persist_directory)
+    #result = vectordb.get()
+    create_index(vector_dimensions=VECTOR_DIMENSIONS)
+
+    text = "Hello"
+    # create query embedding
+    response = openai.Embedding.create(input=[text], engine="text-embedding-ada-002")
+    query_embedding = np.array([r["embedding"] for r in response["data"]], dtype=np.float32)[0]
+    print(f"Embedding size {len(query_embedding)}")
+
+    # query for similar documents that have the openai tag
+    query = (
+        Query("(@tag:{ openai })=>[KNN 2 @vector $vec as score]")
+        .sort_by("score")
+        .return_fields("content", "tag", "score")
+        .paging(0, 2)
+        .dialect(2)
+    )
+
+    query_params = {"vec": query_embedding.tobytes()}
+    docs = r.ft(INDEX_NAME).search(query, query_params).docs
+
+    result = str(docs)
 
     return result
 
@@ -52,13 +126,32 @@ def get_text(query_request: QueryText):
     query = query_request.text
     print(f"Query: {query}")
 
-    embeddings = OpenAIEmbeddings()
-    vectordb = Chroma.from_texts([""], embeddings,persist_directory=persist_directory)
-    docs = vectordb.similarity_search(query)
+    #embeddings = OpenAIEmbeddings()
+    #vectordb = Chroma.from_texts([""], embeddings,persist_directory=persist_directory)
+    #docs = vectordb.similarity_search(query)
+
+    # create query embedding
+    response = openai.Embedding.create(input=[query], engine="text-embedding-ada-002")
+    query_embedding = np.array([r["embedding"] for r in response["data"]], dtype=np.float32)[0]
+    print(f"Embedding size {len(query_embedding)}")
+
+    # query for similar documents that have the openai tag
+    query = (
+        Query("(@tag:{ openai })=>[KNN 5 @vector $vec as score]")
+        .sort_by("score")
+        .return_fields("content", "tag", "score")
+        .paging(0, 5)
+        .dialect(2)
+    )
+
+    query_params = {"vec": query_embedding.tobytes()}
+    docs = r.ft(INDEX_NAME).search(query, query_params).docs
+
+
     print(f"Num of docs found: {len(docs)}")
     context = ""
     for doc in docs:
-        context += doc.page_content
+        context += doc.content+"\n\n"
     print(f"Result: {context}")
 
     return context

@@ -1,17 +1,19 @@
-# Default values for docuchat.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
 replicaCount: 1
 
 textToVecImage:
+  # Overrides with your 
   repository: dockercr1.azurecr.io/text-to-vec
   pullPolicy: Always
-  # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
 
 dbVecImage:
   repository: dockercr1.azurecr.io/db-vec
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "4.1"
+
+redisImage:
+  repository: redis/redis-stack-server
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
@@ -65,6 +67,11 @@ agentService:
   port: 8002
   name: agent
   path: /agent
+
+redisService:
+  name: redis-stack-server
+  path: /agent
+  port: 6379
 
 
 ingress:

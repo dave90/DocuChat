@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Values.dbVectorService.name }}-pvc
+  name: {{ .Values.redisService.name }}-pvc
 spec:
   accessModes:
     - ReadWriteOnce

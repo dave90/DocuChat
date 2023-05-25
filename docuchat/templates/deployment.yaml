@@ -50,13 +50,10 @@ spec:
             secretKeyRef:
               name: openai-token 
               key: token
-        volumeMounts:
-        - name: db-vec-db
-          mountPath: /service/db
-      volumes:
-      - name: db-vec-db
-        persistentVolumeClaim:
-          claimName: {{ .Values.dbVectorService.name }}-pvc
+        - name: REDIS_HOST
+          value: "{{ .Values.redisService.name }}"
+        - name: REDIS_PORT
+          value: "{{ .Values.redisService.port }}"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -88,3 +85,31 @@ spec:
             secretKeyRef:
               name: openai-token 
               key: token
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.redisService.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.redisService.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.redisService.name }}
+    spec:
+      containers:
+      - name: {{ .Values.redisService.name }}
+        image: "{{ .Values.redisImage.repository }}:{{ .Values.redisImage.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.redisImage.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.redisService.port }}
+        volumeMounts:
+        - name: redis-vm
+          mountPath: /data
+      volumes:
+      - name: redis-vm
+        persistentVolumeClaim:
+          claimName: {{ .Values.redisService.name }}-pvc
