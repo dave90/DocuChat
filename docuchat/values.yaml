@@ -10,7 +10,7 @@ dbVecImage:
   repository: dockercr1.azurecr.io/db-vec
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "4.1"
+  tag: "latest"
 
 redisImage:
   repository: redis/redis-stack-server

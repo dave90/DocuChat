@@ -1,5 +1,11 @@
 # DocuChat
 
+TODO
+
+## Structure of repository
+
+TODO
+
 ## Helm
 
 ### Install Nginx ingress to aks
@@ -29,6 +35,13 @@ Check the secrets:
 ### Install DocuChat chart
 
 - helm upgrade --install -f docuchat/values.yaml docuchat ./docuchat --namespace $NAMESPACE
+
+After the installation of the chart one pod is created for each services (db-vec,agent,text-to-vec and redis-stack-server). And ingress rules are applied:
+
+- http://<CLUSTER IP OR DOMAIN>/text-to-vec: for storing the text
+- http://<CLUSTER IP OR DOMAIN>/agent: for query the documents
+
+Also a persistence volume is created to allow the redis-stack-server to persist the data.
 
 Uninstall:
 

@@ -1,20 +1,27 @@
-# To run
-uvicorn main:app --reload --port 8000
+# Text To Vector Service
+
+This micro service store a large text to the DB Vector that will
+be used during the query answer phase.
+
+# Dependencies
+This service depends on *DB vector* service.
+
+Please install the python dependencies from *requirements.txt*
 
 # Docker
 
 ## Build
 
 - local: docker build -t text-to-vec .
-- azure: az acr build -r \<azure docker repo name\> -t text-to-vec .
-
-## Run
-
-- docker run -p 8000:8000 text-to-vec 
-
-# Create requirements
-pip freeze > requirements.txt
+- azure: 
+  - AZURE_REPO=\<Your azure docker repo name\>
+  - az acr build -r $AZURE_REPO -t text-to-vec .
 
 # Environment variables
-- DBVECTOR_SERVICE_NAME: name of the DbVector service
+- DBVECTOR_SERVICE_NAME: Name or IP of the DbVector service
 - DBVECTOR_SERVICE_PORT: Open port of the DbVector service
+
+
+# To run locally
+
+uvicorn main:app --reload --port 8000

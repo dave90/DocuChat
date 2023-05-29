@@ -9,12 +9,15 @@ import os
 from langchain.llms import OpenAI
 from langchain.prompts import load_prompt
 from langchain.chains import LLMChain
+from fastapi.responses import JSONResponse
+import json
 
 app = FastAPI()
 app.openapi_version = "3.0.0"
 
 class QueryText(BaseModel):
     text: str
+
 
 @app.get("/")
 def read_root():
@@ -35,12 +38,15 @@ def get_text(query_request: QueryText):
     r = requests.post(db_vector_url, json={"text": query})
     print("Result:")
     print(r)
-    context = str(r.content.decode())
-    print(context)
+    context_json = r.json()
+    print(context_json)
+    context = context_json["context"]
+
+    print("Call OpenAI")
 
     llm = OpenAI(temperature=0.0)
     prompt = load_prompt("lc://prompts/vector_db_qa/prompt.json")
-    chain = LLMChain(llm=llm, prompt=prompt)
+    chain = LLMChain(llm=llm, prompt=prompt,verbose=True)
     response = chain.run(question=query, context=context)
 
-    return response
+    return {"response":response, "context":context}

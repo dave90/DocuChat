@@ -23,6 +23,10 @@ def read_root():
 
 @app.post("/add_text")
 def read_item(text_request: Text):
+    '''
+    Take as input the text to load and split in chunks and send the chunks to db vector service
+    '''
+
     text = text_request.text
     print(f"Receiving text of [{len(text)}] size")
     text_splitter = NLTKTextSplitter(chunk_size=1000)

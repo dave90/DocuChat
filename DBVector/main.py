@@ -21,6 +21,9 @@ INDEX_NAME = "index"                              # Vector Index Name
 DOC_PREFIX = "doc:"                               # RediSearch Key Prefix for the Index
 VECTOR_DIMENSIONS = 1536
 
+app = FastAPI()
+
+
 def create_index(vector_dimensions: int):
     try:
         # check to see if index exists
@@ -45,8 +48,6 @@ def create_index(vector_dimensions: int):
         # create Index
         r.ft(INDEX_NAME).create_index(fields=schema, definition=definition)
 
-app = FastAPI()
-
 
 class TextChunks(BaseModel):
     text: List[str] = []
@@ -63,16 +64,15 @@ def read_root():
 
 @app.put("/store_text")
 def store_text(text_request: TextChunks):
+    '''
+    Given a chunk of text store into the DB Vector
+    '''
     chunks = text_request.text
     print(f"Receiving chunks [{len(chunks)}] size")
     if len(chunks) == 0:
         return "EMPTY CHUNKS"
 
     create_index(vector_dimensions=VECTOR_DIMENSIONS)
-
-    #embeddings = OpenAIEmbeddings()
-    #vectordb = Chroma.from_texts(chunks, embeddings,persist_directory=persist_directory)
-    #vectordb.persist()
 
     response = openai.Embedding.create(input=chunks, engine="text-embedding-ada-002")
     embeddings = np.array([r["embedding"] for r in response["data"]], dtype=np.float32)
@@ -94,9 +94,10 @@ def store_text(text_request: TextChunks):
 
 @app.get("/get_text")
 def get_text():
-    #embeddings = OpenAIEmbeddings()
-    #vectordb = Chroma.from_texts([""], embeddings,persist_directory=persist_directory)
-    #result = vectordb.get()
+    '''
+    Get random chunks. Used for debug.
+    '''
+
     create_index(vector_dimensions=VECTOR_DIMENSIONS)
 
     text = "Hello"
@@ -123,19 +124,18 @@ def get_text():
 
 @app.post("/get_text")
 def get_text(query_request: QueryText):
+    '''
+    Given a text (query) return similar texts inside DB Vector (context)
+    '''
     query = query_request.text
     print(f"Query: {query}")
-
-    #embeddings = OpenAIEmbeddings()
-    #vectordb = Chroma.from_texts([""], embeddings,persist_directory=persist_directory)
-    #docs = vectordb.similarity_search(query)
 
     # create query embedding
     response = openai.Embedding.create(input=[query], engine="text-embedding-ada-002")
     query_embedding = np.array([r["embedding"] for r in response["data"]], dtype=np.float32)[0]
     print(f"Embedding size {len(query_embedding)}")
 
-    # query for similar documents that have the openai tag
+    # query 5 similar documents that have the openai tag
     query = (
         Query("(@tag:{ openai })=>[KNN 5 @vector $vec as score]")
         .sort_by("score")
@@ -154,4 +154,4 @@ def get_text(query_request: QueryText):
         context += doc.content+"\n\n"
     print(f"Result: {context}")
 
-    return context
+    return {"context":context}
