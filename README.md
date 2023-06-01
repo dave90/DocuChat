@@ -34,7 +34,7 @@ Now you have a nginx LoadBalancer running. You can find the exposed cluster IP *
 
 ### Add Open AI API token
 
-- OPENAI_API_KEY=<YOUR OPENAI API TOKEN>
+- OPENAI_API_KEY=\<YOUR OPENAI API TOKEN\>
 - kubectl create secret generic openai-token --from-literal=token=$OPENAI_API_KEY --namespace $NAMESPACE
 
 Check the secrets:
