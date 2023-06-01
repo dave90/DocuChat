@@ -56,3 +56,9 @@ Uninstall:
 
 - helm uninstall docuchat --namespace $NAMESPACE
 
+## UI
+Go to the UI folder:
+- Set the env. variables:
+  - AGENT_SERVICE_NAME=\<CLUSTER IP\>
+  - AGENT_SERVICE_PORT=80
+- Run it with: streamlit run streamlit_app.py
