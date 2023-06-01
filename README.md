@@ -20,7 +20,7 @@ You can find the full explanation of the repository:  [From messy notebook code 
 
 ### Install Nginx ingress to aks
 
-- NAMESPACE=ingress-basic
+- NAMESPACE=docuchat
 - helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 - helm repo update
 - helm install ingress-nginx ingress-nginx/ingress-nginx \
