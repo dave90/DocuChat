@@ -23,7 +23,7 @@ class QueryText(BaseModel):
 def read_root():
     key = os.environ["OPENAI_API_KEY"]
     print(f"Len Open AI key: {len(key)}")
-    return {"Hello": "World"}
+    return {"Service": "agent"}
 
 
 @app.post("/query")

@@ -18,7 +18,7 @@ class Text(BaseModel):
 
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {"Service": "text-to-vec"}
 
 
 @app.post("/add_text")

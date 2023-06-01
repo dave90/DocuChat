@@ -13,7 +13,8 @@ agent_port = os.environ["AGENT_SERVICE_PORT"]
 # Response output
 ## Function for taking user prompt as input followed by producing AI generated responses
 def generate_response(prompt):
-    agent_vector_url = f"http://{agent_host}:{agent_port}/agent/query"
+    #agent_vector_url = f"http://{agent_host}:{agent_port}/agent/query"
+    agent_vector_url = f"http://{agent_host}:{agent_port}/query"
     print(f"Send to Agent: {agent_vector_url} ")
     print("Prompt: ",prompt)
     response = requests.post(agent_vector_url, json={"text": prompt})

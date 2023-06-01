@@ -1,20 +1,29 @@
 # DocuChat
 
-TODO
+You can find the full explanation of the repository:  [From messy notebook code to clean kubernetes pods](https://dave90.github.io/posts/docu-chat-2/)
 
 ## Structure of repository
 
-TODO
+- Agent: The Agent service manage the queries with the LLM model.
+- DBVector: Manages the storing and retrieving data to vector DB.
+- TextToVector: service that manage the storing of chunks of text. It takes a long text and it split in chunks and store the chunks into the DB Vector calling the DB Vector service.
+- docuchat: Helm chart definition
+  - values.yml: defines the all parameters
+  - templates/deployment.yaml: defines the pods
+  - templates/service.yaml: defines the services
+  - templates/ingress.yaml: defines the ingress rules
+  - templates/pvc.yaml: defines the persistence volume claim
+
+- UI: simple chat that will allow to talk with the bot.
 
 ## Helm
 
 ### Install Nginx ingress to aks
 
--NAMESPACE=ingress-basic
--helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
--helm repo update
-
--helm install ingress-nginx ingress-nginx/ingress-nginx \
+- NAMESPACE=ingress-basic
+- helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+- helm repo update
+- helm install ingress-nginx ingress-nginx/ingress-nginx \
   --create-namespace \
   --namespace $NAMESPACE \
   --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz
@@ -46,3 +55,7 @@ Also a persistence volume is created to allow the redis-stack-server to persist 
 Uninstall:
 
 - helm uninstall docuchat --namespace $NAMESPACE
+
+### DocuChat UI
+
+TODO
